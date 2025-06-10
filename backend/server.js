@@ -5,7 +5,7 @@ const app = express();
 const bookRoutes = require('./routes/bookRoutes');
 const sequelize = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
-
+const readingStatusRoutes = require('./routes/readingStatusRoutes');
 // Middlewares
 app.use(cors());
 app.use(express.json());
@@ -15,6 +15,8 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use('/api/books', bookRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/reading-status', readingStatusRoutes);
+
 
 
 const PORT = process.env.PORT;

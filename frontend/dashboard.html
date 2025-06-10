@@ -1,33 +1,140 @@
-<!DOCTYPE html>
 <html lang="fa">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>داشبورد</title>
-  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="./css/style.css" />
 </head>
 <body>
+  <script>
+    if (!localStorage.getItem('token')) {
+      window.location.href = './login.html';
+    }
+  </script>
+
+  <div id="header-container"></div>
+
   <div class="container">
-    <h2>داشبورد کاربر</h2>
-    <div id="userInfo"></div>
-    <button onclick="logout()">خروج</button>
+    <h2>لیست کتاب‌های شما</h2>
+    <div id="book-list" class="book-grid"></div>
+    <div class="message" id="message"></div>
   </div>
 
   <script>
-    const user = JSON.parse(localStorage.getItem('user'));
-    const userInfoDiv = document.getElementById('userInfo');
+    fetch('./header.html')
+      .then(res => res.text())
+      .then(data => {
+        document.getElementById('header-container').innerHTML = data;
+        const logoutBtn = document.querySelector('.logout-btn');
+        if (logoutBtn) {
+          logoutBtn.addEventListener('click', function () {
+            localStorage.removeItem('token');
+            window.location.href = './login.html';
+          });
+        }
+      })
+      .catch(err => console.error('Error loading header:', err));
 
-    if (user) {
-      userInfoDiv.innerHTML = `<p><strong>شناسه:</strong> ${user.id}</p>
-                               <p><strong>نام کاربری:</strong> ${user.username || '---'}</p>`;
-    } else {
-      userInfoDiv.innerHTML = '<p>شما وارد نشده‌اید</p>';
+    const bookList = document.getElementById('book-list');
+    const message = document.getElementById('message');
+
+    async function loadBooks() {
+      try {
+        const res = await fetch('http://localhost:5000/api/reading-status/list', {
+          method: 'GET',
+          headers: {
+            'Authorization': 'Bearer ' + localStorage.getItem('token'),
+            'Cache-Control': 'no-cache'
+          }
+        });
+
+        console.log('Response status:', res.status);
+        const json = await res.json();
+        console.log('Response data:', json);
+
+        if (res.ok) {
+          if (json.books.length === 0) {
+            bookList.innerHTML = '<p class="no-books">هیچ کتابی در لیست مطالعه شما وجود ندارد.</p>';
+          } else {
+            bookList.innerHTML = json.books.map(book => `
+              <div class="book-card">
+                <h3>${book.title} : عنوان کتاب</h3>
+                <p class="id">${book.id} : شناسه</p>
+                <p class="description">${book.description} : توضيحات</p>
+                <p class="status">وضعیت: ${book.status === 'Finished' ? 'خوانده شده' : 'در حال مطالعه'}</p>
+                <div class="actions">
+                </div>
+              </div>
+            `).join('');
+          }
+        } else {
+          message.style.color = 'red';
+          message.textContent = json.message || 'خطا در دریافت لیست کتاب‌ها';
+        }
+      } catch (err) {
+        console.error('Fetch error:', err);
+        message.style.color = 'red';
+        message.textContent = 'خطا در ارتباط با سرور';
+      }
     }
 
-    function logout() {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = 'login.html';
+    async function updateBookStatus(bookId) {
+      try {
+        const res = await fetch('http://localhost:5000/api/reading-status/update', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + localStorage.getItem('token'),
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ book_id: bookId })
+        });
+
+        const json = await res.json();
+        if (res.ok) {
+          message.style.color = 'green';
+          message.textContent = json.message;
+          loadBooks(); // بازخوانی لیست
+        } else {
+          message.style.color = 'red';
+          message.textContent = json.message || 'خطا در به‌روزرسانی وضعیت';
+        }
+      } catch (err) {
+        console.error('Update error:', err);
+        message.style.color = 'red';
+        message.textContent = 'خطا در ارتباط با سرور';
+      }
     }
+
+    async function deleteBook(bookId) {
+      if (!confirm('آیا مطمئن هستید که می‌خواهید این کتاب را حذف کنید؟')) return;
+
+      try {
+        const res = await fetch('http://localhost:5000/api/reading-status/remove', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + localStorage.getItem('token'),
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ book_id: bookId })
+        });
+
+        const json = await res.json();
+        if (res.ok) {
+          message.style.color = 'green';
+          message.textContent = json.message;
+          loadBooks(); // بازخوانی لیست
+        } else {
+          message.style.color = 'red';
+          message.textContent = json.message || 'خطا در حذف کتاب';
+        }
+      } catch (err) {
+        console.error('Delete error:', err);
+        message.style.color = 'red';
+        message.textContent = 'خطا در ارتباط با سرور';
+      }
+    }
+
+    loadBooks();
   </script>
 </body>
 </html>

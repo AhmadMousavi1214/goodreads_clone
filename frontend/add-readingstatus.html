@@ -1,0 +1,78 @@
+<html lang="fa">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>افزودن کتاب به وضعیت</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="header-container"></div>
+
+  <div class="container">
+    <h2>افزودن کتاب به وضعیت "می‌خواهم بخوانم"</h2>
+
+    <form id="readingStatusForm">
+      <label for="book_id">شناسه کتاب:</label>
+      <input type="number" id="book_id" name="book_id" required />
+
+      <button type="submit">ثبت در وضعیت مطالعه</button>
+    </form>
+
+    <div class="message" id="message"></div>
+  </div>
+
+<script>
+  if (!localStorage.getItem('token')) {
+      window.location.href = './login.html';
+    }
+  // بارگذاری هدر
+  fetch('./header.html')
+    .then(res => res.text())
+    .then(data => {
+      document.getElementById('header-container').innerHTML = data;
+
+      // فعال‌سازی دکمه خروج پس از بارگذاری هدر
+      const logoutBtn = document.querySelector('.logout-btn');
+      if (logoutBtn) {
+        logoutBtn.addEventListener('click', function () {
+          localStorage.removeItem('token');
+          window.location.href = './login.html';
+        });
+      }
+    });
+
+  const form = document.getElementById('readingStatusForm');
+  const message = document.getElementById('message');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const bookId = form.book_id.value.trim();
+
+    try {
+      const res = await fetch('http://localhost:5000/api/reading-status/add', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + localStorage.getItem('token')
+        },
+        body: JSON.stringify({ book_id: bookId })
+      });
+
+      const json = await res.json();
+
+      if (res.ok) {
+        message.style.color = 'green';
+        message.textContent = json.message || 'کتاب با موفقیت به وضعیت "می‌خواهم بخوانم" اضافه شد!';
+      } else {
+        message.style.color = 'red';
+        message.textContent = json.message || 'خطا در افزودن کتاب';
+      }
+    } catch (err) {
+      message.style.color = 'red';
+      message.textContent = 'خطا در ارتباط با سرور';
+    }
+  });
+</script>
+
+</body>
+</html>
