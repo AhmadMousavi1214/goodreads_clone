@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+  <meta charset="UTF-8" />
+  <title>ثبت‌نام</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="container">
+    <h2>ثبت‌نام</h2>
+    <form id="registerForm">
+      <label for="username">نام کاربری</label>
+      <input type="text" id="username" required />
+
+      <label for="email">ایمیل</label>
+      <input type="email" id="email" required />
+
+      <label for="password">رمز عبور</label>
+      <input type="password" id="password" required />
+
+      <button type="submit">ثبت‌نام</button>
+      <div class="message" id="message"></div>
+    </form>
+    <a href="login.html">حساب دارید؟ وارد شوید</a>
+  </div>
+
+  <script>
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const data = {
+        username: username.value,
+        email: email.value,
+        password: password.value
+      };
+
+      try {
+        const res = await fetch('http://localhost:5000/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        const json = await res.json();
+        const msg = document.getElementById('message');
+
+        if (res.ok) {
+          msg.style.color = 'green';
+          msg.textContent = 'ثبت‌نام موفق بود!';
+          setTimeout(() => window.location.href = 'login.html', 1500);
+        } else {
+          msg.style.color = 'red';
+          msg.textContent = json.message || 'خطا در ثبت‌نام';
+        }
+      } catch {
+        document.getElementById('message').textContent = 'خطا در ارتباط با سرور';
+      }
+    });
+  </script>
+</body>
+</html>

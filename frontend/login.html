@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+  <meta charset="UTF-8" />
+  <title>ورود</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="container">
+    <h2>ورود</h2>
+    <form id="loginForm">
+      <label for="email">ایمیل</label>
+      <input type="email" id="email" required />
+
+      <label for="password">رمز عبور</label>
+      <input type="password" id="password" required />
+
+      <button type="submit">ورود</button>
+      <div class="message" id="message"></div>
+    </form>
+    <a href="register.html">حساب ندارید؟ ثبت‌نام کنید</a>
+  </div>
+
+  <script>
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const data = {
+        email: email.value,
+        password: password.value
+      };
+
+      try {
+        const res = await fetch('http://localhost:5000/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        const json = await res.json();
+        const msg = document.getElementById('message');
+
+        if (res.ok) {
+          localStorage.setItem('token', json.token);
+          localStorage.setItem('user', JSON.stringify(json.user));
+          window.location.href = 'dashboard.html';
+        } else {
+          msg.style.color = 'red';
+          msg.textContent = json.message || 'خطا در ورود';
+        }
+      } catch {
+        document.getElementById('message').textContent = 'خطا در ارتباط با سرور';
+      }
+    });
+  </script>
+</body>
+</html>

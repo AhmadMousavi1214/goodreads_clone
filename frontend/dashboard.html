@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+  <meta charset="UTF-8" />
+  <title>داشبورد</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="container">
+    <h2>داشبورد کاربر</h2>
+    <div id="userInfo"></div>
+    <button onclick="logout()">خروج</button>
+  </div>
+
+  <script>
+    const user = JSON.parse(localStorage.getItem('user'));
+    const userInfoDiv = document.getElementById('userInfo');
+
+    if (user) {
+      userInfoDiv.innerHTML = `<p><strong>شناسه:</strong> ${user.id}</p>
+                               <p><strong>نام کاربری:</strong> ${user.username || '---'}</p>`;
+    } else {
+      userInfoDiv.innerHTML = '<p>شما وارد نشده‌اید</p>';
+    }
+
+    function logout() {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = 'login.html';
+    }
+  </script>
+</body>
+</html>
